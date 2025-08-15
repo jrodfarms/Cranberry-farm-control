@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ cfg.site_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { padding: 16px; background: #0b1725; color:#e7eef9;}
+      .card { margin-bottom: 12px; background:#11243a; border: 1px solid #1d3557; }
+      .card-header { background:#0f1e32; color:#9ec1ff; font-weight:600;}
+      .value { font-size: 1.4rem; font-weight: 700; color: #ffffff; }
+      .muted { color:#9fb3c8; }
+      .btn-primary { background:#3b82f6; border-color:#3b82f6; }
+      .btn-success { background:#22c55e; border-color:#22c55e; }
+      .btn-danger { background:#ef4444; border-color:#ef4444; }
+      .badge { font-size: 0.85rem; }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row g-3">
+        <div class="col-12">
+          <h3>{{ cfg.site_name }}</h3>
+          <p class="muted mb-1">Mock Mode: {{ 'ON' if cfg.mock_mode else 'OFF' }}</p>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card">
+            <div class="card-header">Air Temperatures</div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-4"><div class="value">{{ '%.1f'|format(s.air_temp_c_A) }}°C</div><div class="muted">Air A</div></div>
+                <div class="col-4"><div class="value">{{ '%.1f'|format(s.air_temp_c_B) }}°C</div><div class="muted">Air B</div></div>
+                <div class="col-4"><div class="value">{{ '%.1f'|format(s.air_temp_c_C) }}°C</div><div class="muted">Air C</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Soil</div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-6"><div class="value">{{ s.soil_moisture }}</div><div class="muted">Moisture</div></div>
+                <div class="col-6"><div class="value">{{ '%.1f'|format(s.soil_temp_c_1) }} / {{ '%.1f'|format(s.soil_temp_c_2) }} / {{ '%.1f'|format(s.soil_temp_c_3) }}°C</div><div class="muted">Soil Temps (1/2/3)</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card">
+            <div class="card-header">Water & Pressure</div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-4"><div class="value">{{ '%.0f'|format(s.psi) }} PSI</div><div class="muted">Irrigation</div></div>
+                <div class="col-4"><div class="value">{{ '%.0f'|format(s.flood_level_1_cm) }} cm</div><div class="muted">Flood #1 Height</div></div>
+                <div class="col-4"><div class="value">{{ '%.0f'|format(s.flood_level_2_cm) }} cm</div><div class="muted">Flood #2 Height</div></div>
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-{{ 'success' if s.irrigation_water_level_ok else 'danger' }}">Irrigation Supply {{ 'OK' if s.irrigation_water_level_ok else 'LOW' }}</span>
+                <span class="badge bg-{{ 'warning' if s.drain_float_on else 'secondary' }}">Drain Float {{ 'ON' if s.drain_float_on else 'OFF' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Frost / Auto Settings</div>
+            <div class="card-body">
+              <form method="post" action="/settings" class="row g-2">
+                <div class="col-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="auto_control_enabled" id="auto" {{ 'checked' if cfg.auto_control_enabled else '' }}>
+                    <label class="form-check-label" for="auto">Auto Control</label>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <select class="form-select" name="temp_mode">
+                    <option value="cool" {{ 'selected' if cfg.temp_mode=='cool' }}>Cool</option>
+                    <option value="heat" {{ 'selected' if cfg.temp_mode=='heat' }}>Heat</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">ON °C</label>
+                  <input class="form-control" type="number" step="0.1" name="temp_on_threshold_c" value="{{ cfg.temp_on_threshold_c }}">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">OFF °C</label>
+                  <input class="form-control" type="number" step="0.1" name="temp_off_threshold_c" value="{{ cfg.temp_off_threshold_c }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">PSI Low Cutoff</label>
+                  <input class="form-control" type="number" step="0.1" name="psi_low_cutoff" value="{{ cfg.psi_low_cutoff }}">
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-primary w-100" type="submit">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card">
+            <div class="card-header">Pump Controls</div>
+            <div class="card-body text-center">
+              <form method="post" action="/toggle/irrigation">
+                <input type="hidden" name="on" value="{{ 0 if p.irrigation_on else 1 }}"/>
+                <button class="btn btn-{{ 'danger' if p.irrigation_on else 'success' }} w-100" type="submit">
+                  {{ 'Turn Irrigation OFF' if p.irrigation_on else 'Turn Irrigation ON' }}
+                </button>
+              </form>
+              <div class="mt-3 muted small">Scheduling & additional pumps will appear here in the full build.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">System Status</div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-6"><div class="value">{{ 'ON' if p.irrigation_on else 'OFF' }}</div><div class="muted">Irrigation Pump</div></div>
+                <div class="col-6"><div class="value">{{ 'ON' if s.drain_float_on else 'OFF' }}</div><div class="muted">Drain Float</div></div>
+              </div>
+              <div class="mt-2 muted">Harvest Mode: <strong>{{ 'ON' if cfg.harvest_mode else 'OFF' }}</strong></div>
+              <div class="mt-1 muted">Frost Offset: <strong>{{ '%.1f'|format(cfg.frost_offset_c) }}°C</strong></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

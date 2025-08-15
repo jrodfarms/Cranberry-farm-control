@@ -1,0 +1,13 @@
+{
+  "site_name": "Rodwell Farms \u2013 HMI",
+  "mock_mode": true,
+  "update_interval_seconds": 5,
+  "auto_control_enabled": false,
+  "temp_mode": "cool",
+  "temp_on_threshold_c": 25.0,
+  "temp_off_threshold_c": 20.0,
+  "psi_low_cutoff": 15.0,
+  "harvest_mode": false,
+  "frost_offset_c": -3.5,
+  "frost_threshold_c": 0.0
+}
